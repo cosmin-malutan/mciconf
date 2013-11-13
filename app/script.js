@@ -262,6 +262,21 @@ mciconf.directive('formPage', function () {
   }
 });
 
+mciconf.directive('notification', function () {
+  return {
+    restrict: 'AE',
+    templateUrl: 'templates/logger.html',
+    controller: function ($scope, $rootScope) {
+      $scope.alerts = [{type: "error", message: "Demo alert"},
+                       {type: "success", message: "Demo alert"},
+                       {type: "warning", message: "Demo alert"}];
+      $scope.closeAlert = function (aIndex) {
+        $scope.alerts.splice(aIndex, 1);
+      }
+    }
+  }
+});
+
 /*
  * This filter should return all elements that are not already added
  * including the current element
