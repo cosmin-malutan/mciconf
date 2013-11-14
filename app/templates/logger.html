@@ -1,7 +1,7 @@
-<div>
+<div style="max-width: 400px">
   <legend>Logger</legend>
-  <div class="alert" ng-animate="'animate'" ng-repeat="alert in alerts" type="alert.type" close="closeAlert($index)">
+  <div ng-repeat="alert in alerts"  class='alert' ng-class='alert.type && "alert-" + alert.type'>
     {{alert.message}}
-    <button type="button" class="close" ng-click="closeAlert($index)">x</button>
+    <button type='button' class='close' ng-click="closeAlert($index)">x</button>
   </div>
 </div>

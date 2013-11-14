@@ -24,12 +24,25 @@ mciconf.controller('mainController', ['$scope', '$rootScope', '$http',
     $rootScope.iconClasses = ["icon-question-sign", "icon-ok", "icon-remove"];
     $rootScope.buttonClasses = ["btn-warning", "btn-success", "btn-danger"];
     $rootScope.locales = ["en-US"];
-
+    $rootScope.ff_versions = [];
     //START Retrieving data
     $http.get('data/dashboards.json').then(function (res){
       $rootScope.dashboards = res.data.dashboards;
       $rootScope.dashboardsbuildUrl = res.data.dashboardsbuildUrl;
       $rootScope.dashboard = $scope.dashboards[0];
+    });
+
+    $http.get('http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/', {headers:{'Accept':'text/html'}}).then(function (res){
+      var doc = document.createElement('div');
+      doc.innerHTML = res.data.split('<table>')[1].split('</table>')[0];
+      var links = doc.getElementsByTagName('a');
+      for (var link in links) {
+        if (links[link].innerText && links[link].innerText.indexOf('-candidates') !== -1)
+          $rootScope.ff_versions.push(links[link].innerText.split('-candidates/')[0]);
+      };
+      $rootScope.ff_versions.sort(function(a,b){
+        return parseInt(b)-parseInt(a);
+      });
     });
 
     $http.get('https://l10n.mozilla.org/shipping/api/status?tree=fx_beta').then(function (res){
@@ -165,6 +178,8 @@ mciconf.directive('build', function () {
               foundBuilds += 1;
               if (foundBuilds === locales.length) {
                 $rootScope.builds[aBuildIndex].firefox_versions[aVersionIndex].exists = STATE.FOUND;
+                $scope.$emit('notify', {type: 'success',
+                                        message: 'Build "' + buildUrl + '" exists.'});
 
                 // Because we change this outside angular world we have to call the apply function to check models
                 if (!$rootScope.$$phase)
@@ -173,7 +188,8 @@ mciconf.directive('build', function () {
               x.abort();
             } else if ((x.readyState == 2 && x.status !== 200) || x.status === 0) {
               $rootScope.builds[aBuildIndex].firefox_versions[aVersionIndex].exists = STATE.NOT_FOUND;
-
+              $scope.$emit('notify', {type: 'error',
+                                      message: 'No Build was found at ' + buildUrl});
               // Because we change this outside angular world we have to call the apply function to check models
               if (!$rootScope.$$phase)
                 $rootScope.$apply();
@@ -190,6 +206,8 @@ mciconf.directive('build', function () {
         $scope.checker = $timeout(function() {
           for (var i = 0; i < locales.length; i += 1) {
             if ($rootScope.locales.indexOf(locales[i]) === -1) {
+              $scope.$emit('notify', {type: 'error',
+                                      message: 'Locale "' + locales[i] + '" was not found!'});
               locales.splice(i, 1);
               i -= 1; // If we remove one item the next one will be on the same index
             }
@@ -270,9 +288,17 @@ mciconf.directive('notification', function () {
       $scope.alerts = [{type: "error", message: "Demo alert"},
                        {type: "success", message: "Demo alert"},
                        {type: "warning", message: "Demo alert"}];
+      $scope.history = [];
       $scope.closeAlert = function (aIndex) {
         $scope.alerts.splice(aIndex, 1);
       }
+      $rootScope.$on('notify', function (aEvent, aMessage) {
+        $scope.alerts.reverse();
+        $scope.alerts.push({type: aMessage.type, message: aMessage.message});
+        $scope.alerts.reverse();
+        if ($scope.alerts.length > 3)
+          $scope.history.push($scope.alerts.pop());
+      });
     }
   }
 });
