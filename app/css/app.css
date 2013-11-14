@@ -15,13 +15,15 @@
   width: 95%;
 }
 .formView {
-  display: inline-block;
+  display: inline-table;
   margin-right: 5px;
   width: 45%;
-  height: 100%;
+  height: 150px;
+}
+.alert {
+  position: relative;
 }
 .alert .close {
-  position: relative;
   top: -2px;
   right: -21px;
   line-height: 20px;
