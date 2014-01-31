@@ -11,7 +11,7 @@
 .buildVersion {
   margin-bottom: 2px;
 }
-.addVersion {
+.add {
   width: 95%;
 }
 .formView {
@@ -51,22 +51,13 @@ form-page .btn-danger {
   top: 100%;
   left: 0;
   z-index: 1000;
-  float: left;
   min-width: 160px;
   padding: 5px 0;
   margin: 2px 0 0;
-  list-style: none;
-  background-color: #fff;
-  border: 1px solid #ccc;
+  background: #fff;
   border: 1px solid rgba(0,0,0,0.2);
-  -webkit-border-radius: 6px;
-  -moz-border-radius: 6px;
   border-radius: 6px;
-  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
-  -moz-box-shadow: 0 5px 10px rgba(0,0,0,0.2);
   box-shadow: 0 5px 10px rgba(0,0,0,0.2);
-  -webkit-background-clip: padding-box;
-  -moz-background-clip: padding;
   background-clip: padding-box;
 }
 drop-down-check-box {
@@ -124,51 +115,22 @@ build .btn-danger {
 }
 .upload {
   float: right;
-  display: inline-block;
   margin-left: 10px;
 }
 input[type=file] {
 	position: relative;
 	text-align: right;
-	-moz-opacity:0 ;
-	filter:alpha(opacity: 0);
 	opacity: 0;
 	z-index: 2;
   left: -80px;
   max-width: 160px;
   max-height: 100px;
-  margin-right: -100px;
-  margin-left: -55px;
-  margin-top: -15px;
-  margin-bottom: -15px;
+  margin: -15px -100px -15px -55px;
 }
 
 .spin {
-  -webkit-animation: spin .4s infinite linear;
-  -moz-animation: spin .4s infinite linear;
-  -o-animation: spin .4s infinite linear;
   animation: spin .4s infinite linear;
-     -webkit-transform-origin: 50% 58%;
-         transform-origin:50% 58%;
-         -ms-transform-origin:50% 58%; /* IE 9 */
-}
-
-@-moz-keyframes spin {
-  from {
-    -moz-transform: rotate(0deg);
-  }
-  to {
-    -moz-transform: rotate(360deg);
-  }
-}
-
-@-webkit-keyframes spin {
-  from {
-    -webkit-transform: rotate(0deg);
-  }
-  to {
-    -webkit-transform: rotate(360deg);
-  }
+  transform-origin:50% 58%;
 }
 
 @keyframes spin {
@@ -180,7 +142,7 @@ input[type=file] {
   }
 }
 
-build .icon-minus-sign:hover {
+build .icon-minus-sign {
   cursor:pointer;
 }
 #config-saver {

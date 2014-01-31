@@ -1,3 +1,4 @@
+const BASE_URL = "http://ftp.mozilla.org/pub/mozilla.org/firefox/";
 const PLATFORM_FRAGMENTS = {
   linux: 'linux-i686',
   linux64: 'linux-x86_64',
@@ -20,8 +21,9 @@ const TIMEOUT_NOTIFICATION_DISPLAYED = 3000;
 function notAdded(value) {
   return !value.added;
 }
+
 // Helper function to get unique ids
-var getNextUid = function getNextUid() {
+var getNextUID = function () {
   var counter = 0;
 
   return function () {

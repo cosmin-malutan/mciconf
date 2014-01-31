@@ -10,7 +10,7 @@ mciconf.directive('build', function () {
        * @param {number} aIndex
        *        Index of build on which we append an empty version
        */
-      $scope.addVersion = function (aIndex) {
+      $scope.add = function (aIndex) {
         var build = {};
         build.exists = STATE.NOT_CHECKED;
         build.name = ($rootScope.firefoxVersions.length) ? $rootScope.firefoxVersions[0] : "";
@@ -31,25 +31,24 @@ mciconf.directive('build', function () {
        *        Index of the build
        */
       $rootScope.buildNumberChanged = function (aVersionIndex, aBuildIndex) {
-        var url = "http://ftp.mozilla.org/pub/mozilla.org/firefox/";
         var version = $rootScope.builds[aBuildIndex].
                                  firefoxVersions[aVersionIndex].
                                  name.split("#")[0];
-        var candidate = $rootScope.builds[aBuildIndex].
+        var isCandidate = $rootScope.builds[aBuildIndex].
                                    firefoxVersions[aVersionIndex].
                                    buildNumber !== 'final';
 
-        url += (candidate) ? "candidates/" : "releases/";
-        url += version + ((candidate) ? "-candidates/" : "");
-        url += (candidate) ? $rootScope.builds[aBuildIndex].
-                                        firefoxVersions[aVersionIndex].
-                                        buildNumber + "/" : "/";
-        url += PLATFORM_FRAGMENTS[$rootScope.builds[aBuildIndex].platformVersion.platform ||
-                                  $rootScope.builds[aBuildIndex].platform.platform] + "/";
+        var platformFragment = PLATFORM_FRAGMENTS[$rootScope.builds[aBuildIndex].platformVersion.platform ||
+                                                  $rootScope.builds[aBuildIndex].platform.platform];
+        var url = [BASE_URL, isCandidate ? "candidates/" : "releases/",
+                   version + isCandidate ? "-candidates/" : "",
+                   isCandidate ? $rootScope.builds[aBuildIndex].
+                                            firefoxVersions[aVersionIndex].
+                                            buildNumber + "/" : "/",
+                   platformFragment + "/"].join("");
 
-
-        // Parsing the ftp directory of the current build to retrieve
-        // the current build locals
+        // Parsing the FTP directory of the current build to retrieve
+        // the current build locales
         $rootScope.parseAtAddress(url, "a", function () {
           // Clear the available locales of the current build
           $rootScope.builds[aBuildIndex].
@@ -59,36 +58,45 @@ mciconf.directive('build', function () {
         }, function (link) {
           if (link.href && link.href.indexOf(link.innerHTML) !== -1) {
             var locale = $rootScope.builds[aBuildIndex].firefoxVersions[aVersionIndex].locale;
+            var reg= new RegExp("(.*?)/");
+            var localeElement = reg.exec(link.innerHTML)[1];
+
             $rootScope.builds[aBuildIndex].
                        firefoxVersions[aVersionIndex].
-                       availableLocales.push({ locale: link.innerHTML.split('/')[0],
-                                               added: (locale && locale.indexOf(link.innerHTML.split('/')[0]) !== -1) ? true : false });
+                       availableLocales.push({ locale: localeElement,
+                                               added: (locale && locale.indexOf(localeElement) !== -1) ? true : false });
           }
         });
       }
+
+      /**
+       * Function to check the build
+       *
+       * @param {number} aVersionIndex
+       *        Index of version
+       * @param {number} aBuildIndex
+       *        Index of the build
+       */
       $scope.checkBuild = function (aVersionIndex, aBuildIndex) {
         // If there is no version and locales then we have to invalidate the build and return early
-        if ( !$rootScope.builds[aBuildIndex].firefoxVersions[aVersionIndex].locale) {
+        if (!$rootScope.builds[aBuildIndex].firefoxVersions[aVersionIndex].locale) {
           $rootScope.builds[aBuildIndex].
                      firefoxVersions[aVersionIndex].
                      exists = STATE.NOT_FOUND;
           $scope.$emit('notify', {type: 'error',
-                                  message: 'A localization must be given'});
+                                  message: 'A locale must be given'});
           return;
         }
 
         var candidate = $rootScope.builds[aBuildIndex].
                                    firefoxVersions[aVersionIndex].
                                    buildNumber !== 'final';
-        var file = "";
         var foundBuilds = 0;
         var responseReceived = 0;
-
-
         var locales = $rootScope.builds[aBuildIndex].
                                  firefoxVersions[aVersionIndex].
                                  locale.split(" ");
-        var url = "http://ftp.mozilla.org/pub/mozilla.org/firefox/";
+
         if (!$rootScope.builds[aBuildIndex].firefoxVersions[aVersionIndex].name) {
           $rootScope.builds[aBuildIndex].firefoxVersions[aVersionIndex].exists =  STATE.NOT_FOUND;
           $rootScope.$emit('notify', {type: 'error',
@@ -99,31 +107,26 @@ mciconf.directive('build', function () {
         var version = $rootScope.builds[aBuildIndex].
                                  firefoxVersions[aVersionIndex].
                                  name.split("#")[0];
-        url += (candidate) ? "candidates/" : "releases/";
-        url += version + ((candidate) ? "-candidates/" : "");
-        url += (candidate) ? $rootScope.builds[aBuildIndex].
-                                        firefoxVersions[aVersionIndex].
-                                        buildNumber + "/" : "/";
-        url += PLATFORM_FRAGMENTS[$rootScope.builds[aBuildIndex].platformVersion.platform ||
-                                  $rootScope.builds[aBuildIndex].platform.platform] + "/";
+        var platformFragment = PLATFORM_FRAGMENTS[$rootScope.builds[aBuildIndex].platformVersion.platform ||
+                                                  $rootScope.builds[aBuildIndex].platform.platform];
+        var url = [BASE_URL, (candidate) ? "candidates/" : "releases/",
+                   version + (candidate) ? "-candidates/" : "",
+                   (candidate) ? $rootScope.builds[aBuildIndex].
+                                            firefoxVersions[aVersionIndex].
+                                            buildNumber + "/" : "/",
+                   platformFragment + "/"].join("");
 
         // Depending o platform we are we create the string of the file we should
         // see on ftp directory
         switch ($rootScope.builds[aBuildIndex].platform.platform) {
           case "linux":
-            file += "firefox-";
-            file += version;
-            file += ".tar.bz2";
+            var file = encodeURI(["firefox-", version, ".tar.bz2"].join());
             break;
           case "mac":
-            file += "Firefox%20";
-            file += version;
-            file += ".dmg";
+            var file = encodeURI(["Firefox ", version, ".dmg"].join());
             break;
           case "win32":
-            file += "Firefox%20Setup%20";
-            file += version;
-            file += ".exe";
+            var file = encodeURI(["Firefox Setup ", version, ".exe"].join());
             break;
         }
 
@@ -143,7 +146,8 @@ mciconf.directive('build', function () {
               }
             }
           }, function () {
-            // After the last locale check if enough locales where found
+            // After the last locale check if all locales where found we set
+            // the build state to found
             if (locales.length === responseReceived && locales.length !== foundBuilds) {
               $rootScope.builds[aBuildIndex].
                          firefoxVersions[aVersionIndex].
@@ -213,7 +217,7 @@ mciconf.directive('build', function () {
       };
 
       /**
-       * Hellper function to
+       * Helper function to
        *
        * @param aVersionIndex
        * @param aBuildIndex
@@ -349,7 +353,7 @@ mciconf.directive('notification', function () {
       // if the queue is bigger then 3
       $rootScope.$on('notify', function (aEvent, aMessage) {
         $scope.alerts.reverse();
-        $scope.alerts.push({type: aMessage.type, message: aMessage.message, uid: getNextUid()});
+        $scope.alerts.push({type: aMessage.type, message: aMessage.message, uid: getNextUID()});
         $scope.alerts.reverse();
         if ($scope.alerts.length > 3)
           $scope.history.push($scope.alerts.pop());
